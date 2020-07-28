@@ -1,7 +1,9 @@
 # encoding: UTF-8
 #
-# Мини-викторина (v.1) с хранением вопросов в отдельных файлах
+# Мини-викторина (v.1.1) с хранением вопросов и ответов в XML файле
 #
+require 'rexml/document'
+require_relative 'question'
 
 # win hack
 if Gem.win_platform?
@@ -14,44 +16,27 @@ if Gem.win_platform?
 end
 
 current_path = File.dirname(__FILE__)
+file_name = current_path + "/questions.xml"
 
-questions_path = current_path + "/data/questions.txt"
-answers_path = current_path + "/data/answers.txt"
+abort "XML файл не найден!" unless File.exist?(file_name)
 
-unless File.exist?(answers_path) && File.exist?(questions_path)
-  abort 'Один из файлов не найден!'
-end
+questions = Question.read_questions_from_xml(file_name)
 
-# Считываем вопросы и ответы в массивы
-questions_file = File.new(questions_path, "r:UTF-8")
-questions = questions_file.readlines
-questions_file.close
-
-answers_file = File.new(answers_path, "r:UTF-8")
-answers = answers_file.readlines
-answers_file.close
-
-correct_answers = 0
-current_question = 0
+# Счетчик правильных ответов
+right_answers_counter = 0
 
 puts "Мини-викторина. Ответьте на вопросы."
 
-while current_question < questions.size
-
-  puts
-  puts questions[current_question]
-
-  user_answer = STDIN.gets.encode("UTF-8").chomp
-  correct_answer = answers[current_question].chomp
-
-  if user_answer == correct_answer
-    puts "Верный ответ!"
-    correct_answers += 1
+questions.each do |question|
+  question.show
+  question.ask
+  if question.correctly_answered?
+    right_answers_counter += 1
+    puts "Верно"
   else
-    puts "Неправильно. Правильный ответ: " + correct_answer
+    puts "Неверно"
   end
-  current_question += 1
 end
 
 puts
-puts "Правильных ответов: #{correct_answers} из #{questions.size}"
+puts "Правильных ответов: #{right_answers_counter} из #{questions.size}"
